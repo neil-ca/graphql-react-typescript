@@ -24,6 +24,7 @@ const main = async () => {
     synchronize: true,
     entities: [Post, User],
   });
+  console.log(conn);
   
   const app = express();
 
