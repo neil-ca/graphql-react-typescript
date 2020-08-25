@@ -8,7 +8,7 @@ import NextLink from "next/link";
 const Index = () => {
   const [{ data }] = usePostsQuery({
     variables: {
-      limit: 10
+      limit: 15
     }
   });
   return (
