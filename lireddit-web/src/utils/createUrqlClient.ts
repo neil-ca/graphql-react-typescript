@@ -55,6 +55,7 @@ const cursorPagination = (): Resolver => {
       results.push(...data);
     });
     return {
+      __typename: "PaginatedPosts",
       hasMore,
       posts: results,
     };
