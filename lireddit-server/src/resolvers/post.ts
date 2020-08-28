@@ -1,21 +1,21 @@
 import {
   Arg,
+  Ctx,
+  Field,
+  FieldResolver,
+  InputType,
+  Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
-  InputType,
-  Field,
-  Ctx,
-  UseMiddleware,
-  Int,
-  FieldResolver,
   Root,
-  ObjectType,
+  UseMiddleware,
 } from "type-graphql";
-import { Post } from "../entities/Post";
-import { MyContext } from "../types";
-import { isAuth } from "../middleware/isAuth";
 import { getConnection } from "typeorm";
+import { Post } from "../entities/Post";
+import { isAuth } from "../middleware/isAuth";
+import { MyContext } from "../types";
 
 @InputType()
 class PostInput {
@@ -40,6 +40,36 @@ export class PostResolver {
     return root.text.slice(0, 50);
   }
 
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg("postId", () => Int) postId: number,
+    @Arg("value", () => Int) value: number,
+    @Ctx() { req }: MyContext
+  ) {
+    const isUpdoot = value !== -1;
+    const realValue = isUpdoot ? 1 : -1;
+    const { userId } = req.session;
+    /* await Updoot.insert({
+      userId,
+      postId,
+      value: realValue,
+    }); */
+    await getConnection().query(
+      `
+    START TRANSACTION;
+    insert into updoot ("userId", "postId", value)
+    values (${userId},${postId},${realValue});
+
+    update post 
+    set points = points + ${realValue}
+    where id = ${postId};
+    COMMIT;  
+    `
+    );
+    return true;
+  }
+
   @Query(() => PaginatedPosts)
   async posts(
     @Arg("limit", () => Int) limit: number,
@@ -50,9 +80,9 @@ export class PostResolver {
     const realLimitPlusOne = realLimit + 1;
     const replacements: any[] = [realLimitPlusOne];
     if (cursor) {
-      replacements.push(new Date(parseInt(cursor)))
+      replacements.push(new Date(parseInt(cursor)));
     }
-    
+
     const posts = await getConnection().query(
       `
       select p.*,
@@ -72,7 +102,7 @@ export class PostResolver {
       replacements
     );
 
-     // const qb = getConnection()
+    // const qb = getConnection()
     //   .getRepository(Post)
     //   .createQueryBuilder("p")
     //   .innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
@@ -86,7 +116,7 @@ export class PostResolver {
     // }
 
     // const posts = await qb.getMany();
-    console.log("posts: ", posts);
+    //console.log("posts: ", posts);
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,
