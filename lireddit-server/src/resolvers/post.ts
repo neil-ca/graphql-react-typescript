@@ -126,7 +126,7 @@ export class PostResolver {
         'email', u.email,
         'createdAt', u."createdAt",
         'updatedAt', u."updatedAt"
-      ) creator
+      ) creator,
       ${
         req.session.userId
           ? ',(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"'
@@ -163,8 +163,8 @@ export class PostResolver {
   }
 
   @Query(() => Post, { nullable: true })
-  post(@Arg("id") id: number): Promise<Post | undefined> {
-    return Post.findOne(id);
+  post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
+    return Post.findOne(id, { relations: ["creator"]});
   }
 
   @Mutation(() => Post)
