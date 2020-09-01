@@ -15,6 +15,7 @@ import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 import path from "path";
 import { Updoot } from "./entities/Updoot";
+import { createUserLoader } from "./utils/createUserLoader";
 
 const main = async () => {
   const conn = await createConnection({
@@ -27,8 +28,8 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot],
   });
-  await conn.runMigrations()
-  //await Post.delete({}) 
+  await conn.runMigrations();
+  //await Post.delete({})
   const app = express();
 
   const RedisStore = connectRedis(session);
@@ -36,7 +37,7 @@ const main = async () => {
   app.use(
     cors({
       origin: "http://localhost:3000",
-      credentials: true, 
+      credentials: true,
     })
   );
   app.use(
@@ -63,7 +64,12 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res, redis }),
+    context: ({ req, res }) => ({
+      req,
+      res,
+      redis,
+      userLoader: createUserLoader(),
+    }),
   });
 
   apolloServer.applyMiddleware({
