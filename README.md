@@ -1,2 +1,3 @@
 # graphql-react-typescript
-Fullstack in react and graphQL  
+
+Fullstack in react and graphQL :smile:
